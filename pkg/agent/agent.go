@@ -72,7 +72,7 @@ func init() {
 	utilruntime.Must(routev1.AddToScheme(scheme))
 	utilruntime.Must(corev1.AddToScheme(scheme))
 	utilruntime.Must(discoveryv1.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
+	// +kubebuilder:scaffold:scheme
 }
 
 func NewAgentCommand(addonName string, logger logr.Logger) *cobra.Command {
@@ -253,7 +253,7 @@ func (o *AgentOptions) runControllerManager(ctx context.Context) error {
 
 	log.Info("starting manager")
 
-	//+kubebuilder:scaffold:builder
+	// +kubebuilder:scaffold:builder
 	if err = aCtrl.SetupWithManager(mgr); err != nil {
 		metrics.AddonAgentFailedToStartBool.Set(1)
 		return fmt.Errorf("unable to create agent controller: %s, err: %w", util.AddonControllerName, err)
@@ -432,7 +432,7 @@ func createClient(ctx context.Context, client client.Client, host, bearerToken s
 type agentController struct {
 	hubClient                   client.Client
 	spokeUncachedClient         client.Client
-	spokeClient                 client.Client              //local for agent
+	spokeClient                 client.Client              // local for agent
 	spokeClustersClient         clusterclientset.Interface // client used to create cluster claim for the hypershift management cluster
 	prometheusClient            prometheusv1.API
 	log                         logr.Logger
@@ -516,6 +516,7 @@ func (c *agentController) generateExtManagedKubeconfigSecret(ctx context.Context
 		c.log.Error(err, fmt.Sprintf("there is no cluster in kubeconfig from secret: %s", secret.GetName()))
 		return fmt.Errorf("there is no cluster in kubeconfig from secret: %s", secret.GetName())
 	}
+	fmt.Printf("####### kubeconfig: %#v\n", kubeconfig)
 
 	if kubeconfig.Clusters["cluster"] == nil {
 		c.log.Error(err, fmt.Sprintf("failed to get a cluster from kubeconfig in secret: %s", secret.GetName()))
@@ -709,7 +710,7 @@ func (c *agentController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 				c.log.Error(err, fmt.Sprintf("failed to get hosted cluster secret %s on local cluster, skip this one", client.ObjectKeyFromObject(se)))
 				continue
 			}
-
+			fmt.Printf("####### kubeconfig secret: %#v\n", se)
 			hubMirrorSecret.SetAnnotations(map[string]string{util.ManagedClusterAnnoKey: managedClusterAnnoValue})
 			hubMirrorSecret.Data = se.Data
 
@@ -781,7 +782,7 @@ func (c *agentController) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	if err := createOrUpdateMirrorSecrets(); err != nil {
 		c.log.Info(fmt.Sprintf("failed to create external-managed-kubeconfig and mirror secrets for hostedcluster %s, error: %s. Will try again in 30 seconds", hc.Name, err.Error()))
 
-		//Not failure, namespace is still creating
+		// Not failure, namespace is still creating
 		if !strings.Contains(err.Error(), "failed to find the klusterlet namespace") {
 			metrics.FailedReconcileCount.Inc()
 		}
